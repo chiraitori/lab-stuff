@@ -77,3 +77,37 @@ export const explainReaction = async (
     return "Lỗi phân tích phản ứng.";
   }
 };
+
+export const explainIndustrialProcess = async (
+  moleculeName: string,
+  processType: 'Cracking' | 'Reforming'
+): Promise<string> => {
+  const client = getClient();
+  if (!client) return "Cần API Key để phân tích quá trình.";
+
+  const prompt = `
+    Người dùng muốn tìm hiểu về quá trình **${processType}** của hợp chất **${moleculeName}**.
+    
+    Hãy giải thích dựa trên định nghĩa chuẩn sau:
+    - **Cracking:** Là quá trình bẻ gãy liên kết C-C của hydrocarbon mạch dài để tạo thành các hydrocarbon mạch ngắn hơn (thường là Alkane ngắn hơn và Alkene).
+    - **Reforming:** Là quá trình tái định hình cấu trúc mạch carbon (từ mạch thẳng thành mạch nhánh, hoặc đóng vòng thơm) mà không làm thay đổi số lượng nguyên tử Carbon (thường kèm tách Hydro).
+
+    Nội dung trả lời:
+    1. **Khả năng phản ứng:** ${moleculeName} có thể tham gia quá trình này không? (Lưu ý: Methane/Ethane thường mạch quá ngắn để cracking tạo alkane/alkene chuẩn, hoặc quá ngắn để reforming tạo nhánh/vòng).
+    2. **Sản phẩm dự kiến:** Nếu phản ứng được, sản phẩm chính là gì? (Ví dụ: Cracking Butane ra Ethane + Ethene hoặc Methane + Propene).
+    3. **Phương trình minh họa:** Viết 1 phương trình tiêu biểu (Dùng →, chỉ số dưới Unicode).
+    4. **Điều kiện:** Nhiệt độ, xúc tác.
+
+    Giữ văn phong ngắn gọn, dễ hiểu cho học sinh. Tiếng Việt.
+  `;
+
+  try {
+    const response = await client.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    return response.text || "Không thể phân tích quá trình.";
+  } catch (error) {
+    return "Lỗi phân tích quá trình.";
+  }
+};

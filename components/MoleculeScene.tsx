@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, Stage } from '@react-three/drei';
+import { OrbitControls, Environment, Stage, Sparkles } from '@react-three/drei';
 import { Atom3D } from './Atom3D';
 import { Bond3D } from './Bond3D';
 import { IAtom, AtomType } from '../types';
@@ -9,9 +9,10 @@ interface MoleculeSceneProps {
   atoms: IAtom[];
   onAtomClick?: (id: string, type: AtomType) => void;
   canInteract?: boolean;
+  isCracking?: boolean;
 }
 
-export const MoleculeScene: React.FC<MoleculeSceneProps> = ({ atoms, onAtomClick, canInteract = false }) => {
+export const MoleculeScene: React.FC<MoleculeSceneProps> = ({ atoms, onAtomClick, canInteract = false, isCracking = false }) => {
   // Logic to draw bonds: Check the 'connectedTo' property
   const bonds = atoms.flatMap(atom => {
     return atom.connectedTo.map(targetId => {
@@ -34,6 +35,11 @@ export const MoleculeScene: React.FC<MoleculeSceneProps> = ({ atoms, onAtomClick
             backgroundSize: '40px 40px'
         }}
       ></div>
+      
+      {/* Cracking Overlay Gradient */}
+      {isCracking && (
+        <div className="absolute inset-0 z-0 bg-orange-600/10 pointer-events-none animate-pulse"></div>
+      )}
 
       <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
         <Suspense fallback={null}>
@@ -47,10 +53,24 @@ export const MoleculeScene: React.FC<MoleculeSceneProps> = ({ atoms, onAtomClick
                   key={atom.id} 
                   atom={atom} 
                   onClick={(id, type) => onAtomClick && onAtomClick(id, type)} 
-                  hoverable={canInteract} 
+                  hoverable={canInteract}
+                  isCracking={isCracking}
                 />
               ))}
               {bonds}
+              
+              {/* Fire Effect for Cracking */}
+              {isCracking && (
+                <Sparkles 
+                  count={60} 
+                  scale={6} 
+                  size={5} 
+                  speed={0.8} 
+                  opacity={0.8} 
+                  color="#ff5500" 
+                  noise={0.5}
+                />
+              )}
             </group>
           </Stage>
           

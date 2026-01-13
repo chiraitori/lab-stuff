@@ -9,9 +9,10 @@ interface Atom3DProps {
   atom: IAtom;
   onClick: (atomId: string, currentType: AtomType) => void;
   hoverable: boolean;
+  isCracking?: boolean;
 }
 
-export const Atom3D: React.FC<Atom3DProps> = ({ atom, onClick, hoverable }) => {
+export const Atom3D: React.FC<Atom3DProps> = ({ atom, onClick, hoverable, isCracking = false }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHover] = useState(false);
   const [clicked, setClicked] = useState(false);
@@ -43,12 +44,33 @@ export const Atom3D: React.FC<Atom3DProps> = ({ atom, onClick, hoverable }) => {
       }
 
       meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.2);
+
+      // Cracking Animation: Vibration and Red Color
+      if (isCracking) {
+        // Random intense vibration
+        meshRef.current.position.x = (Math.random() - 0.5) * 0.15;
+        meshRef.current.position.y = (Math.random() - 0.5) * 0.15;
+        meshRef.current.position.z = (Math.random() - 0.5) * 0.15;
+
+        // Change color to glowing red
+        (meshRef.current.material as THREE.MeshStandardMaterial).color.lerp(new THREE.Color('#ff2200'), 0.1);
+        (meshRef.current.material as THREE.MeshStandardMaterial).emissive = new THREE.Color('#aa0000');
+        (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
+      } else {
+        // Reset position
+        meshRef.current.position.set(0, 0, 0);
+        
+        // Reset color
+        (meshRef.current.material as THREE.MeshStandardMaterial).color.lerp(new THREE.Color(props.color), 0.1);
+        (meshRef.current.material as THREE.MeshStandardMaterial).emissive = new THREE.Color('#000000');
+        (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+      }
     }
   });
 
   const handleClick = (e: any) => {
     e.stopPropagation();
-    if (hoverable) {
+    if (hoverable && !isCracking) {
       setClicked(true);
       setTimeout(() => setClicked(false), 150);
       onClick(atom.id, atom.type);
@@ -62,7 +84,7 @@ export const Atom3D: React.FC<Atom3DProps> = ({ atom, onClick, hoverable }) => {
         onClick={handleClick}
         onPointerOver={(e) => {
           e.stopPropagation();
-          if (hoverable) {
+          if (hoverable && !isCracking) {
             setHover(true);
             document.body.style.cursor = 'pointer';
           }
@@ -85,7 +107,7 @@ export const Atom3D: React.FC<Atom3DProps> = ({ atom, onClick, hoverable }) => {
       <Html position={[0, 0, 0]} center pointerEvents="none">
         <div 
           className={`text-xs font-bold select-none transition-all duration-300 ${
-            props.color === '#FFFFFF' || props.color === '#f3f4f6' ? 'text-black' : 'text-white'
+            (props.color === '#FFFFFF' || props.color === '#f3f4f6') && !isCracking ? 'text-black' : 'text-white'
           }`}
           style={{ 
             opacity: hovered ? 1 : 0.7,
